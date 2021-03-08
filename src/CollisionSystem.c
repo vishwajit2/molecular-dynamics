@@ -44,3 +44,45 @@ void deleteCollisionSystem(CollisionSystem *cs)
     free(cs);
     return;
 }
+
+void simulate(CollisionSystem *cs, double limit)
+{
+    PQueue *pq = cs->pq;
+    Event **particles = cs->particles;
+    for (size_t i = 0; i < cs->n; i++) {
+        predict(cs, particles[i], limit);
+    }
+    enqueuePQ(pq, newEvent(NULL, NULL, 0)); // redraw event
+
+    Event *e;
+    Particle *a, *b;
+    // the main event-driven simulation loop
+    while (!isEmpty(pq)) {
+
+        // get next event, discard if invalidated
+        e = dequeuePQ(pq);
+        if (!isValid(e)) continue;
+        a = e->particle1;
+        b = e->particle2;
+
+        // physical collision, so update positions, and then simulation clock
+        for (int i = 0; i < cs->n; i++) {
+            move(particles[i], e->time - cs->t);
+        }
+        cs->t = e->time;
+
+        // process event
+        if (e->type == particleCollision)
+            bounceOff(a, b); // particle-particle collision
+        else if (e->type == wallCollisionX)
+            bounceOffVerticalWall(a); // particle-wall collision
+        else if (e->type == wallCollisionY)
+            bounceOffHorizontalWall(b); // particle-wall collision
+        // else if (e->type == noEvent)
+        // redraw(limit); // redraw event
+
+        // update the priority queue with new collisions involving a or b
+        predict(cs, a, limit);
+        predict(cs, b, limit);
+    }
+}
