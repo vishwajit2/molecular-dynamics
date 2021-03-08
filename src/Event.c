@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include "Event.h"
+#include <stdlib.h>
 
 int involveParticle(Event *event, Particle *particle)
 {
@@ -15,8 +15,13 @@ Event *newEvent(Particle *a, Particle *b, int time)
     // if a is null set countA to -1
     event->countA = a ? a->count : -1;
     event->countB = b ? b->count : -1;
-    event->type = (a && b) ? particleCollision : wallCollision;
+    // only a: X wall collision
+    // only b : Y wall collision
+    if (a)
+        event->type = b ? particleCollision : wallCollisionX;
 
+    else
+        event->type = b ? wallCollisionY : noEvent;
     return event;
 }
 int compareEvent(Event *p, Event *q)

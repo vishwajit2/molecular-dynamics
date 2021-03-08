@@ -1,6 +1,10 @@
+
+
+#ifndef PARTICLE_H
+#define PARTICLE_H
+
 #include <math.h>
-typedef struct Particle
-{
+typedef struct Particle {
     double rx, ry; // position
     double vx, vy; // velocity
     int count;     // number of collisions so far
@@ -44,3 +48,5 @@ void bounceOffHorizontalWall(Particle *p);
 
 // returns kinetic energy of particle p
 double kineticEnergy(Particle *p);
+
+#endif
