@@ -14,10 +14,10 @@ typedef struct Particle {
 } Particle;
 
 // init partile with given values
-Particle *initParticle(double rx, double ry, double vx, double vy, double radius, double mass);
+Particle *createParticle(double rx, double ry, double vx, double vy, double radius, double mass);
 
 // initializes a particle with random position in unit box and random velocity
-Particle *initRandomParticle();
+Particle *createRandomParticle();
 
 // returns 1 if p1 and p2 are same particles, else returns 0
 int isSame(Particle *p1, Particle *p2);
@@ -48,5 +48,21 @@ void bounceOffHorizontalWall(Particle *p);
 
 // returns kinetic energy of particle p
 double kineticEnergy(Particle *p);
+
+// return 1 if a->rx is greater than b->rx,  -1 if a->rx is smaller than b->rx
+// break ties with ry. returns zero if particles are at same location
+int comparePositionX(Particle *a, Particle *b);
+
+// return 1 if a->ry is greater than b->ry,  -1 if a->ry is smaller than b->ry
+// break ties with rx. returns zero if particles are at same location
+int comparePositionY(Particle *a, Particle *b);
+
+// sort particle array according to comparePositionY
+void sort(Particle **particles, size_t n);
+
+// check if array is sorted
+int isSorted(Particle **particles, size_t n);
+// draw particles in arrray to terminal
+void draw(Particle **particles, size_t n);
 
 #endif

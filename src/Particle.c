@@ -1,9 +1,10 @@
 #include "Particle.h"
-#include <time.h>
-#include <stdlib.h>
+#include "checker.h"
 #include <math.h>
+#include <stdlib.h>
+#include <time.h>
 
-Particle *initParticle(double rx, double ry, double vx, double vy, double radius, double mass)
+Particle *createParticle(double rx, double ry, double vx, double vy, double radius, double mass)
 {
     Particle *p = (Particle *)malloc(sizeof(Particle));
     p->vx = vx;
@@ -15,7 +16,7 @@ Particle *initParticle(double rx, double ry, double vx, double vy, double radius
     return p;
 }
 
-Particle *initRandomParticle()
+Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
@@ -28,6 +29,7 @@ Particle *initRandomParticle()
     p->mass = 0.5;
     p->count = 0;
     // p->color
+    return p;
 }
 void move(Particle *p, double dt)
 {
@@ -37,7 +39,8 @@ void move(Particle *p, double dt)
 
 int isSame(Particle *p1, Particle *p2)
 {
-    return (p1->rx == p2->rx && p1->ry == p2->ry && p1->vx == p2->vx && p1->vy == p2->vy && p1->mass == p2->mass && p1->radius == p2->radius && p1->count == p2->count);
+    return (p1->rx == p2->rx && p1->ry == p2->ry && p1->vx == p2->vx && p1->vy == p2->vy &&
+            p1->mass == p2->mass && p1->radius == p2->radius && p1->count == p2->count);
 }
 
 double timeToHit(Particle *p1, Particle *p2)
@@ -122,4 +125,62 @@ void bounceOffHorizontalWall(Particle *p)
 double kineticEnergy(Particle *p)
 {
     return 0.5 * p->mass * (p->vx * p->vx + p->vy * p->vy);
+}
+
+int comparePositionX(Particle *a, Particle *b)
+{
+    if (a == b) return 0; // both points to same particle or both null
+    if (!b) return 1;     // only a
+    if (!a) return -1;    // only b
+
+    if (a->rx > b->rx)
+        return 1;
+    else if (a->rx < b->rx)
+        return -1;
+    // now a->rx = b->rx. compare ry
+    else if (a->ry > b->ry)
+        return 1;
+    else if (a->ry < b->ry)
+        return -1;
+    else
+        return 0;
+}
+
+int comparePositionY(Particle *a, Particle *b)
+{
+    if (a == b) return 0; // both points to same particle or both null
+    if (!b) return 1;     // only a
+    if (!a) return -1;    // only b
+
+    if (a->ry > b->ry)
+        return 1;
+    else if (a->ry < b->ry)
+        return -1;
+    // now a->ry = b->ry. compare rx
+    else if (a->rx > b->rx)
+        return 1;
+    else if (a->rx < b->rx)
+        return -1;
+    else
+        return 0;
+}
+
+int cmpWrapper(const void *a, const void *b)
+{
+    // a and b are pointer to Particle*
+    return comparePositionY(*(Particle **)a, *(Particle **)b);
+}
+
+void sort(Particle **particles, size_t n)
+{
+    qsort(particles, n, sizeof(Particle *), cmpWrapper);
+}
+
+int isSorted(Particle **particles, size_t n)
+{
+    for (size_t i = 0; i < n - 1; i++) {
+        if (comparePositionY(particles[i], particles[i - 1]) > 0)
+            return 0;
+    }
+    return 1;
 }
