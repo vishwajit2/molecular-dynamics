@@ -13,6 +13,7 @@ Particle *createParticle(double rx, double ry, double vx, double vy, double radi
     p->ry = ry;
     p->radius = radius;
     p->mass = mass;
+    p->count = 0;
     return p;
 }
 
@@ -69,18 +70,19 @@ double timeToHit(Particle *p1, Particle *p2)
 double timeToHitVerticalWall(Particle *p)
 {
     if (p->vx > 0)
-        return (1.0 - p->rx - p->radius) / p->vx;
-    else if (p->vx < 0)
-        return (p->radius - p->rx) / p->vx;
+        return ((1.0 - p->rx - p->radius) / p->vx);
+    else if (p->vx < 0) {
+        return ((p->radius - p->rx) / p->vx);
+    }
     else
         return INFINITY;
 }
 double timeToHitHorizontalWall(Particle *p)
 {
     if (p->vy > 0)
-        return (1.0 - p->ry - p->radius) / p->vy;
+        return ((1.0 - p->ry - p->radius) / p->vy);
     else if (p->vy < 0)
-        return (p->radius - p->ry) / p->vy;
+        return ((p->radius - p->ry) / p->vy);
     else
         return INFINITY;
 }
@@ -184,3 +186,79 @@ int isSorted(Particle **particles, size_t n)
     }
     return 1;
 }
+
+void infoParticle(Particle *p)
+{
+    if (!p) printf("particle don't exist ");
+    printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count);
+}
+
+// tests for Particle
+
+void TestParticle()
+{
+    Particle *a, *b;
+    double t;
+    a = createParticle(0, 0.5, 0.002, 0.003, 0.02, 1);
+    b = createParticle(0.1, 0.7, 0.005, 0.001, 0.02, 1);
+    printf("a before :");
+    InfoParticle(a);
+    move(a, 1);
+    printf("a after moving for 1 sec :");
+    InfoParticle(a);
+    printf("time to hit verticle wall :%lf \n", timeToHitVerticalWall(a));
+    printf("time to hit horizontal wall :%lf \n", timeToHitHorizontalWall(a));
+    printf("time to hit each other : %lf \n", timeToHit(a, b));
+
+    printf("particle before collision with verticle wall :");
+    InfoParticle(a);
+    bounceOffVerticalWall(a);
+    printf("particle after collision with verticle wall :");
+    InfoParticle(a);
+
+    printf("particle before collision with horizontal wall :");
+    InfoParticle(b);
+    bounceOffHorizontalWall(b);
+    printf("particle before collision with horizontal wall :");
+    InfoParticle(b);
+    printf("\n");
+
+    a = createParticle(0, 0.5, 0.002, 0, 0.02, 1);
+    b = createParticle(1, 0.5, -0.003, 0, 0.02, 1);
+    printf("particles before collision  :");
+    InfoParticle(a);
+    InfoParticle(b);
+    t = timeToHit(a, b);
+    printf("time to hit each other : %lf \n", t);
+    move(a, t);
+    move(b, t);
+    bounceOff(a, b);
+    printf("particles after collision  :");
+    InfoParticle(a);
+    InfoParticle(b);
+    printf("\n");
+
+    a = createParticle(0, 0, 0.002, 0.002, 0.02, 1);
+    b = createParticle(1, 1, -0.003, -0.003, 0.02, 1);
+    printf("particles before collision  :");
+    InfoParticle(a);
+    InfoParticle(b);
+    t = timeToHit(a, b);
+    printf("time to hit each other : %lf \n", t);
+    move(a, t);
+    move(b, t);
+    bounceOff(a, b);
+    printf("particles after collision  :");
+    InfoParticle(a);
+    InfoParticle(b);
+
+    printf("compare a and b by by X : %d\n", comparePositionX(a, b));
+    printf("compare a and b by by Y : %d\n", comparePositionY(a, b));
+    return;
+}
+
+// int main()
+// {
+//     TestParticle();
+//     return 0;
+// }

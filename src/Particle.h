@@ -2,8 +2,10 @@
 
 #ifndef PARTICLE_H
 #define PARTICLE_H
-
 #include <math.h>
+
+#define InfoParticle(p) (printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count))
+
 typedef struct Particle {
     double rx, ry; // position
     double vx, vy; // velocity
@@ -63,6 +65,7 @@ void sort(Particle **particles, size_t n);
 // check if array is sorted
 int isSorted(Particle **particles, size_t n);
 // draw particles in arrray to terminal
-void draw(Particle **particles, size_t n);
+void drawTerminal(Particle **particles, size_t n);
 
+void infoParticle(Particle *p);
 #endif
