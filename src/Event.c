@@ -1,4 +1,5 @@
 #include "Event.h"
+#include <stdio.h>
 #include <stdlib.h>
 
 int involveParticle(Event *event, Particle *particle)
@@ -41,4 +42,10 @@ bool isValid(Event *t)
     if (t->particle2 && t->particle2->count != t->countB)
         return false;
     return true;
+}
+
+void infoEvent(Event *e)
+{
+    if (!e) printf("No such event");
+    printf("time(%lf) particles(%p %p)\n", e->time, (void *)e->particle1, (void *)e->particle2);
 }

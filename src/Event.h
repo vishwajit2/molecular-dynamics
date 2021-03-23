@@ -5,8 +5,8 @@
 #include <stdbool.h>
 typedef enum eventType {
     particleCollision,
-    wallCollisionX,
-    wallCollisionY,
+    wallCollisionX, // vertical walll
+    wallCollisionY, // horizontal wall
     noEvent,
 } eventType;
 
@@ -28,5 +28,7 @@ int compareEvent(Event *p, Event *q);
 
 // has any collision occurred between when event was created and now?
 bool isValid(Event *p);
+
+void infoEvent(Event *e);
 
 #endif
