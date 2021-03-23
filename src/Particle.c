@@ -21,12 +21,13 @@ Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
-    p->rx = (double)rand() / (double)RAND_MAX;
-    p->ry = (double)rand() / (double)RAND_MAX;
+    p->radius = 0.02;
+    // assign random position in range (0+ radius, 1- raadius)
+    p->rx = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
+    p->ry = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
     double low = -0.005, high = 0.005;
     p->vx = ((double)rand() * (high - low)) / (double)RAND_MAX + low;
     p->vy = ((double)rand() * (high - low)) / (double)RAND_MAX + low;
-    p->radius = 0.02;
     p->mass = 0.5;
     p->count = 0;
     // p->color
