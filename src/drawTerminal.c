@@ -1,7 +1,7 @@
 #include "Particle.h"
 #include "checker.h"
 #include <stdlib.h>
-
+#include <windows.h>
 #define WIDTH 80
 #define HEIGHT 25
 
@@ -31,6 +31,7 @@ int cmpForPrint(Particle *a, Particle *b)
 int cmpWrapperforPrint(const void *a, const void *b)
 {
     // a and b are pointer to Particle*
+    // printf("%lf %lf\n", (*(Particle **)a)->rx, (*(Particle **)b)->rx);
     return cmpForPrint(*(Particle **)a, *(Particle **)b);
 }
 void sortForPrint(Particle **particles, size_t n)
@@ -41,14 +42,15 @@ void sortForPrint(Particle **particles, size_t n)
 int isSortedForPrint(Particle **particles, size_t n)
 {
     for (size_t i = 0; i < n - 1; i++) {
-        if (cmpForPrint(particles[i], particles[i - 1]) > 0)
+        if (cmpForPrint(particles[i], particles[i + 1]) > 0)
             return 0;
     }
     return 1;
 }
 
-void draw(Particle **particles, size_t n)
+void drawTerminal(Particle **particles, size_t n)
 {
+    system("cls");
     if (!isSortedForPrint(particles, n)) sortForPrint(particles, n);
     int row = 0;
     int col = 0;
@@ -93,16 +95,21 @@ void draw(Particle **particles, size_t n)
     printf("|");
 }
 
+void TestDraw()
+{
+    Particle *a[200];
+    int n = 200;
+    for (size_t i = 0; i < n; i++) {
+        a[i] = createRandomParticle();
+    }
+    sortForPrint(a, n);
+    // for (size_t i = 0; i < n; i++) {
+    //     printf("%lf %lf\n", a[i]->rx, a[i]->ry);
+    // }
+    drawTerminal(a, n);
+}
 // int main()
 // {
-//     Particle *a[200];
-//     int n = 200;
-//     for (size_t i = 0; i < n; i++) {
-//         a[i] = createRandomParticle();
-//     }
-//     sortForPrint(a, n);
-//     // for (size_t i = 0; i < n; i++) {
-//     //     printf("%lf %lf\n", a[i]->rx, a[i]->ry);
-//     // }
-//     draw(a, n);
+//     TestDraw();
+//     return 0;
 // }
