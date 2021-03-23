@@ -31,8 +31,7 @@ int isEmptyPQ(PQueue *q)
 
 void deletePQ(PQueue *pq)
 {
-    if (NULL == pq)
-    {
+    if (NULL == pq) {
         DEBUG("Priority Queue is already NULL.");
         return;
     }
@@ -43,17 +42,14 @@ void deletePQ(PQueue *pq)
 void enqueuePQ(PQueue *q, Event *event)
 {
     NP_CHECK(q);
-    if (q->size >= q->capacity)
-    {
+    if (q->size >= q->capacity) {
         // size = 3*size/2 + 1 is optimal new size.
         resizePQ(q, ((3 * q->capacity) / 2) + 1);
-        if (q->size < q->capacity)
-        {
+        if (q->size < q->capacity) {
             printf("Priority Queue is full. we increased capacity");
         }
-        else
-        {
-            DEBUG("priority queueis full. can't add elements");
+        else {
+            DEBUG("priority queue is full. can't add elements");
             return;
         }
     }
@@ -62,8 +58,7 @@ void enqueuePQ(PQueue *q, Event *event)
     // The new element is swapped with its parent as long as its
     // priority is higher
     Event *tmp = NULL;
-    while (i > 0 && compareEvent(q->arr[i], q->arr[PARENT(i)]) == 1)
-    {
+    while (i > 0 && compareEvent(q->arr[i], q->arr[PARENT(i)]) == 1) {
         tmp = q->arr[i];
         q->arr[i] = q->arr[PARENT(i)];
         q->arr[PARENT(i)] = tmp;
@@ -74,8 +69,7 @@ void enqueuePQ(PQueue *q, Event *event)
 Event *peekPQ(PQueue *q)
 {
     NP_CHECK(q);
-    if (q->size < 1)
-    {
+    if (q->size < 1) {
         DEBUG("Priority Queue is empty");
         return NULL;
     }
@@ -86,8 +80,7 @@ Event *dequeuePQ(PQueue *q)
 {
     Event *data = NULL;
     NP_CHECK(q);
-    if (q->size < 1)
-    {
+    if (q->size < 1) {
         // Priority Queue is empty
         DEBUG("Priority Queue is empty . Cannot remove another element .");
         return NULL;
@@ -107,35 +100,29 @@ void heapify_PQ(PQueue *q)
     size_t left, right, largest, i = 0;
     NP_CHECK(q);
 
-    while (i < q->size)
-    {
+    while (i < q->size) {
 
         left = LEFT(i);
         right = RIGHT(i);
 
         /* Left child exists, compare left child with its parent */
-        if (left < q->size && compareEvent(q->arr[left], q->arr[i]) == 1)
-        {
+        if (left < q->size && compareEvent(q->arr[left], q->arr[i]) == 1) {
             largest = left;
         }
-        else
-        {
+        else {
             largest = i;
         }
 
         /* Right child exists, compare right child with the largest element */
-        if (right < q->size && compareEvent(q->arr[right], q->arr[largest]) > 0)
-        {
+        if (right < q->size && compareEvent(q->arr[right], q->arr[largest]) > 0) {
             largest = right;
         }
 
         /* if largest didn't change, No furthur change required */
-        if (largest == i)
-        {
+        if (largest == i) {
             return;
         }
-        else
-        {
+        else {
             /* Swap between the index at the largest element */
             tmp = q->arr[largest];
             q->arr[largest] = q->arr[i];
@@ -150,15 +137,38 @@ void resizePQ(PQueue *q, size_t t)
 {
     NP_CHECK(q);
     NP_CHECK(q->arr);
-    if (t < q->size)
-    {
+    if (t < q->size) {
         DEBUG("can't resize to size less than current requirement");
     }
-    else
-    {
+    else {
         q->capacity = t;
         q->arr = (Event **)realloc(q->arr, t * sizeof(Event *));
     }
     NP_CHECK(q->arr);
     return;
 }
+
+// testing the implementation
+void TestPQ()
+{
+    int n = 10;
+    Event *a[10];
+    Event *t;
+    PQueue *pq = createPQ(n);
+    for (int i = 0; i < n; i++) {
+        a[i] = newEvent(NULL, NULL, rand());
+        enqueuePQ(pq, a[i]);
+        printf("%lf ", a[i]->time);
+    }
+    printf("\n");
+    for (int i = 0; i < n; i++) {
+        t = dequeuePQ(pq);
+        printf("%lf ", t->time);
+    }
+}
+
+// int main()
+// {
+//     TestPQ();
+//     return 0;
+// }
