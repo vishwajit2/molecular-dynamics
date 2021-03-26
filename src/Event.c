@@ -7,7 +7,7 @@ int involveParticle(Event *event, Particle *particle)
     return (event->particle1 == particle || (event->type == particleCollision && event->particle2 == particle));
 }
 
-Event *newEvent(Particle *a, Particle *b, int time)
+Event *newEvent(Particle *a, Particle *b, double time)
 {
     Event *event = (Event *)malloc(sizeof(Event));
     event->time = time;
@@ -48,4 +48,7 @@ void infoEvent(Event *e)
 {
     if (!e) printf("No such event");
     printf("time(%lf) particles(%p %p)\n", e->time, (void *)e->particle1, (void *)e->particle2);
+    infoParticle(e->particle1);
+    infoParticle(e->particle2);
+    printf("\n");
 }

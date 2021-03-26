@@ -18,7 +18,7 @@ typedef struct Event {
 } Event;
 
 // return pointer to Event with given parameters
-Event *newEvent(Particle *a, Particle *b, int time);
+Event *newEvent(Particle *a, Particle *b, double time);
 
 // return 1 if particle is involved in event, else return 0
 int involveParticle(Event *event, Particle *particle);
