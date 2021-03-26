@@ -21,7 +21,7 @@ Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
-    p->radius = 0.02;
+    p->radius = 0.0002;
     // assign random position in range (0+ radius, 1- raadius)
     p->rx = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
     p->ry = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
@@ -62,14 +62,23 @@ double timeToHit(Particle *p1, Particle *p2)
     double drdr = dx * dx + dy * dy;
     double sigma = p1->radius + p2->radius; // distance between particle centers at collison
     double d = (dvdr * dvdr) - dvdv * (drdr - sigma * sigma);
-    // if (drdr < sigma*sigma) printf("overlapping particles");
+    if (drdr < sigma * sigma) printf("overlapping particles");
     if (d < 0)
         return INFINITY;
     return -(dvdr + sqrt(d)) / dvdv;
 }
 
+int isOverlapping(Particle *p1, Particle *p2)
+{
+    double dx = p2->rx - p1->rx;
+    double dy = p2->ry - p1->ry;
+    double sigma = p1->radius + p2->radius;
+    return ((dx * dx + dy * dy) < (sigma * sigma));
+}
+
 double timeToHitVerticalWall(Particle *p)
 {
+    if (!p) return INFINITY;
     if (p->vx > 0)
         return ((1.0 - p->rx - p->radius) / p->vx);
     else if (p->vx < 0) {
@@ -80,6 +89,7 @@ double timeToHitVerticalWall(Particle *p)
 }
 double timeToHitHorizontalWall(Particle *p)
 {
+    if (!p) return INFINITY;
     if (p->vy > 0)
         return ((1.0 - p->ry - p->radius) / p->vy);
     else if (p->vy < 0)

@@ -51,6 +51,9 @@ void bounceOffHorizontalWall(Particle *p);
 // returns kinetic energy of particle p
 double kineticEnergy(Particle *p);
 
+// return 0 if two particles are not overlapping
+int isOverlapping(Particle *p1, Particle *p2);
+
 // return 1 if a->rx is greater than b->rx,  -1 if a->rx is smaller than b->rx
 // break ties with ry. returns zero if particles are at same location
 int comparePositionX(Particle *a, Particle *b);
