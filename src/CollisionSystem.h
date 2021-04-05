@@ -5,8 +5,9 @@
 #include "PQueue.h"
 #include "Particle.h"
 
-#define HZ 0.05 // number of redraw events per clock tick
-typedef struct CollisionSystem {
+#define HZ 0.5 // number of redraw events per clock tick
+typedef struct CollisionSystem
+{
     size_t n;             // number of particles
     Particle **particles; // array of particle pointers
     PQueue *pq;           // priority queue of particles

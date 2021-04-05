@@ -1,5 +1,5 @@
 #include "Particle.h"
-#include "checker.h"
+#include "utilities.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
@@ -21,7 +21,7 @@ Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
-    p->radius = 0.0002;
+    p->radius = 0.002;
     // assign random position in range (0+ radius, 1- raadius)
     p->rx = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
     p->ry = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
@@ -62,7 +62,8 @@ double timeToHit(Particle *p1, Particle *p2)
     double drdr = dx * dx + dy * dy;
     double sigma = p1->radius + p2->radius; // distance between particle centers at collison
     double d = (dvdr * dvdr) - dvdv * (drdr - sigma * sigma);
-    if (drdr < sigma * sigma) printf("overlapping particles");
+    if (drdr < sigma * sigma)
+        printf("overlapping particles");
     if (d < 0)
         return INFINITY;
     return -(dvdr + sqrt(d)) / dvdv;
@@ -78,10 +79,12 @@ int isOverlapping(Particle *p1, Particle *p2)
 
 double timeToHitVerticalWall(Particle *p)
 {
-    if (!p) return INFINITY;
+    if (!p)
+        return INFINITY;
     if (p->vx > 0)
         return ((1.0 - p->rx - p->radius) / p->vx);
-    else if (p->vx < 0) {
+    else if (p->vx < 0)
+    {
         return ((p->radius - p->rx) / p->vx);
     }
     else
@@ -89,7 +92,8 @@ double timeToHitVerticalWall(Particle *p)
 }
 double timeToHitHorizontalWall(Particle *p)
 {
-    if (!p) return INFINITY;
+    if (!p)
+        return INFINITY;
     if (p->vy > 0)
         return ((1.0 - p->ry - p->radius) / p->vy);
     else if (p->vy < 0)
@@ -142,9 +146,12 @@ double kineticEnergy(Particle *p)
 
 int comparePositionX(Particle *a, Particle *b)
 {
-    if (a == b) return 0; // both points to same particle or both null
-    if (!b) return 1;     // only a
-    if (!a) return -1;    // only b
+    if (a == b)
+        return 0; // both points to same particle or both null
+    if (!b)
+        return 1; // only a
+    if (!a)
+        return -1; // only b
 
     if (a->rx > b->rx)
         return 1;
@@ -161,9 +168,12 @@ int comparePositionX(Particle *a, Particle *b)
 
 int comparePositionY(Particle *a, Particle *b)
 {
-    if (a == b) return 0; // both points to same particle or both null
-    if (!b) return 1;     // only a
-    if (!a) return -1;    // only b
+    if (a == b)
+        return 0; // both points to same particle or both null
+    if (!b)
+        return 1; // only a
+    if (!a)
+        return -1; // only b
 
     if (a->ry > b->ry)
         return 1;
@@ -191,7 +201,8 @@ void sort(Particle **particles, size_t n)
 
 int isSorted(Particle **particles, size_t n)
 {
-    for (size_t i = 0; i < n - 1; i++) {
+    for (size_t i = 0; i < n - 1; i++)
+    {
         if (comparePositionY(particles[i], particles[i - 1]) > 0)
             return 0;
     }
@@ -200,7 +211,8 @@ int isSorted(Particle **particles, size_t n)
 
 void infoParticle(Particle *p)
 {
-    if (!p) printf("particle don't exist ");
+    if (!p)
+        printf("particle don't exist ");
     printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count);
 }
 

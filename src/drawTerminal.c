@@ -1,16 +1,27 @@
 #include "Particle.h"
-#include "checker.h"
+#include "utilities.h"
 #include <stdlib.h>
+
+#ifdef _WIN32
 #include <windows.h>
+#endif
+
+#ifdef linux
+#include <unistd.h>
+#endif
+
 #define WIDTH 80
-#define HEIGHT 25
+#define HEIGHT 30
 
 // need to do scaling and conversion to int before comparing
 int cmpForPrint(Particle *a, Particle *b)
 {
-    if (a == b) return 0; // both points to same particle or both null
-    if (!b) return 1;     // only a
-    if (!a) return -1;    // only b
+    if (a == b)
+        return 0; // both points to same particle or both null
+    if (!b)
+        return 1; // only a
+    if (!a)
+        return -1; // only b
     int arx = (int)(a->rx * WIDTH);
     int brx = (int)(b->rx * WIDTH);
     int ary = (int)(a->ry * HEIGHT);
@@ -41,7 +52,8 @@ void sortForPrint(Particle **particles, size_t n)
 
 int isSortedForPrint(Particle **particles, size_t n)
 {
-    for (size_t i = 0; i < n - 1; i++) {
+    for (size_t i = 0; i < n - 1; i++)
+    {
         if (cmpForPrint(particles[i], particles[i + 1]) > 0)
             return 0;
     }
@@ -50,29 +62,48 @@ int isSortedForPrint(Particle **particles, size_t n)
 
 void drawTerminal(Particle **particles, size_t n)
 {
+#ifdef _WIN32
     system("cls");
-    if (!isSortedForPrint(particles, n)) sortForPrint(particles, n);
+#endif
+#ifdef linux
+    system("clear");
+#endif
+    sortForPrint(particles, n);
+    // for (size_t i = 0; i < n; i++)
+    // {
+    //     printf("%d %d\n", (int)(WIDTH * particles[i]->rx), (int)(HEIGHT * particles[i]->ry));
+    // }
     int row = 0;
     int col = 0;
     Particle *p;
-    for (size_t i = 0; i <= WIDTH; i++) {
+    for (size_t i = 0; i <= WIDTH; i++)
+    {
         printf("_");
     }
     printf("\n|");
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
+        if (i > 0 && cmpForPrint(particles[i], particles[i - 1]) == 0)
+            continue;
+
         p = particles[i];
-        while (row != (int)(HEIGHT * p->ry)) {
-            while (col < WIDTH) {
+        while (row != (int)(HEIGHT * p->ry))
+        {
+            while (col < WIDTH)
+            {
                 printf(" ");
                 col++;
             }
             printf("|\n|");
             col = 0;
             ++row;
-            if (row > HEIGHT) return;
+            if (row > HEIGHT)
+                return;
         }
-        while (col != (int)(WIDTH * p->rx)) {
-            if (col >= WIDTH) {
+        while (col != (int)(WIDTH * p->rx))
+        {
+            if (col >= WIDTH)
+            {
                 printf("|\n|");
                 col = 0;
                 continue;
@@ -80,32 +111,37 @@ void drawTerminal(Particle **particles, size_t n)
             printf(" ");
             col = (col + 1);
         }
-        // printf("*%d %d", row, col);
+        // printf("%d", row);
         printf("*");
         col++;
     }
-    while (col < WIDTH) {
+
+    while (col < WIDTH)
+    {
         printf(" ");
         col++;
     }
     printf("|\n|");
-    for (size_t i = 0; i < WIDTH; i++) {
+    for (size_t i = 0; i < WIDTH; i++)
+    {
         printf("_");
     }
-    printf("|");
+    printf("|\n");
 }
 
 void TestDraw()
 {
     Particle *a[200];
     int n = 200;
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         a[i] = createRandomParticle();
     }
     sortForPrint(a, n);
-    // for (size_t i = 0; i < n; i++) {
-    //     printf("%lf %lf\n", a[i]->rx, a[i]->ry);
-    // }
+    for (size_t i = 0; i < n; i++)
+    {
+        printf("%lf %lf\n", a[i]->rx, a[i]->ry);
+    }
     drawTerminal(a, n);
 }
 // int main()

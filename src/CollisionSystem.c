@@ -1,9 +1,11 @@
 #include "CollisionSystem.h"
-#include "checker.h"
+#include "utilities.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <windows.h>
+
+#define HZ 0.5
+time_t start_time;
 
 CollisionSystem *createCollisionSystem(Particle **p, int n)
 {
@@ -12,7 +14,8 @@ CollisionSystem *createCollisionSystem(Particle **p, int n)
     NP_CHECK(cs);
     cs->n = n;
     cs->particles = (Particle **)malloc(n * sizeof(Particle *));
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n; i++)
+    {
         cs->particles[i] = p[i];
     }
     cs->pq = createPQ(n * n);
@@ -31,10 +34,13 @@ CollisionSystem *randomCollisionSystem(int n)
     cs->t = 0;
     cs->particles = (Particle **)malloc(n * sizeof(Particle *));
     Particle *p;
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; i++)
+    {
         p = createRandomParticle();
-        for (int j = 0; j < i; j++) {
-            while (isOverlapping(p, cs->particles[j])) {
+        for (int j = 0; j < i; j++)
+        {
+            while (isOverlapping(p, cs->particles[j]))
+            {
                 p->rx = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
                 p->ry = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
             }
@@ -55,14 +61,17 @@ void deleteCollisionSystem(CollisionSystem *cs)
 void redraw(CollisionSystem *cs, double limit)
 {
     drawTerminal(cs->particles, cs->n);
-    Sleep(20);
-    if (cs->t < limit) {
+    printf("\n%lf %ld\n", cs->t, time(NULL) - start_time);
+    sleep_ms(250);
+    if (cs->t < limit)
+    {
         enqueuePQ(cs->pq, newEvent(NULL, NULL, (cs->t + 1.0 / HZ)));
     }
 }
 
 #define MYPRINT                                                                \
-    for (int i = 0; i < cs->n; i++) {                                          \
+    for (int i = 0; i < cs->n; i++)                                            \
+    {                                                                          \
         printf("%d %lf %lf\n", i, cs->particles[i]->rx, cs->particles[i]->ry); \
     }
 
@@ -72,16 +81,21 @@ void redraw(CollisionSystem *cs, double limit)
 void predict(CollisionSystem *cs, Particle *a, double limit)
 {
 
-    if (!a) return;
+    if (!a)
+        return;
     double dt, dtX, dtY;
     // particle-particle collisions
-    for (int i = 0; i < cs->n; i++) {
+    for (int i = 0; i < cs->n; i++)
+    {
         dt = timeToHit(a, cs->particles[i]);
-        if (cs->t + dt <= limit) {
-            if (dt < 0) {
+        if (cs->t + dt <= limit)
+        {
+            if (dt < 0)
+            {
                 enqueuePQ(cs->pq, newEvent(a, cs->particles[i], cs->t));
             }
-            else {
+            else
+            {
                 enqueuePQ(cs->pq, newEvent(a, cs->particles[i], cs->t + dt));
             }
         }
@@ -91,15 +105,19 @@ void predict(CollisionSystem *cs, Particle *a, double limit)
     dtX = timeToHitVerticalWall(a);
     dtY = timeToHitHorizontalWall(a);
 
-    if (cs->t + dtX <= limit) enqueuePQ(cs->pq, newEvent(a, NULL, cs->t + dtX));
-    if (cs->t + dtY <= limit) enqueuePQ(cs->pq, newEvent(NULL, a, cs->t + dtY));
+    if (cs->t + dtX <= limit)
+        enqueuePQ(cs->pq, newEvent(a, NULL, cs->t + dtX));
+    if (cs->t + dtY <= limit)
+        enqueuePQ(cs->pq, newEvent(NULL, a, cs->t + dtY));
 }
 
 void simulate(CollisionSystem *cs, double limit)
 {
+    start_time = time(NULL);
     PQueue *pq = cs->pq;
     Particle **particles = cs->particles;
-    for (size_t i = 0; i < cs->n; i++) {
+    for (size_t i = 0; i < cs->n; i++)
+    {
         predict(cs, particles[i], limit);
     }
     enqueuePQ(pq, newEvent(NULL, NULL, 0.0)); // redraw event
@@ -108,20 +126,22 @@ void simulate(CollisionSystem *cs, double limit)
     Particle *a, *b;
 
     // the main event-driven simulation loop
-    while (!isEmptyPQ(pq)) {
+    while (!isEmptyPQ(pq))
+    {
 
         // get next event, discard if invalidated
         e = dequeuePQ(pq);
-        if (!isValid(e)) continue;
+        if (!isValid(e))
+            continue;
         a = e->particle1;
         b = e->particle2;
 
-        // printf("\n%lf %I64d\n", cs->t, cs->pq->size);
-        // printf("%d %lf \n", e->type, e->time);
+        // printf("\n%lf %I64ld\n", cs->t, cs->pq->size);
 
         // physical collision, so update positions, and then simulation clock
         if (e->time > cs->t)
-            for (int i = 0; i < cs->n; i++) {
+            for (int i = 0; i < cs->n; i++)
+            {
                 move(particles[i], e->time - cs->t);
             }
         cs->t = e->time;
@@ -146,6 +166,6 @@ int main(int argc, char const *argv[])
 {
     int n = 200;
     CollisionSystem *cs = randomCollisionSystem(n);
-    simulate(cs, 1000);
+    simulate(cs, 500);
     return 0;
 }
