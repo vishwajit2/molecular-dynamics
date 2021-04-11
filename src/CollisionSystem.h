@@ -18,7 +18,11 @@ CollisionSystem *createCollisionSystem(Particle **p, int n);
 
 CollisionSystem *randomCollisionSystem(int n);
 
+CollisionSystem *randomCollisionSystemPure(int n);
+
 void predict(CollisionSystem *cs, Particle *a, double limit);
+
+void simulate(CollisionSystem *cs, double limit);
 
 void deleteCollisionSystem(CollisionSystem *cs);
 
