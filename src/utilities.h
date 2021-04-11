@@ -2,6 +2,7 @@
 #define UTILITY_H
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void sleep_ms(int milliseconds);
 
@@ -17,4 +18,9 @@ void sleep_ms(int milliseconds);
 // for debugging
 #define DEBUG(msg) fprintf(stderr, "%s:%d %s", __FILE__, __LINE__, (msg))
 
+// random integer between 0 and n. (includes 0 but not n)
+#define randomInt(n) (rand() % (n))
+
+// random double between min and max (inclusive)
+#define randomDouble(min, max) ((min) + (double)rand() / ((double)RAND_MAX / ((max) - (min))))
 #endif
