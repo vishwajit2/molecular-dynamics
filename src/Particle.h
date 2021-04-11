@@ -4,6 +4,16 @@
 
 #define InfoParticle(p) (printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count))
 
+typedef unsigned char color_t;
+
+struct Color
+{
+    // RGB values between 0 to 255
+    color_t R;
+    color_t G;
+    color_t B;
+};
+
 typedef struct Particle
 {
     double rx, ry; // position
@@ -11,7 +21,7 @@ typedef struct Particle
     int count;     // number of collisions so far
     double radius; // radius
     double mass;   // mass
-    // char *color;   // color
+    struct Color color;
 } Particle;
 
 // init partile with given values

@@ -14,6 +14,9 @@ Particle *createParticle(double rx, double ry, double vx, double vy, double radi
     p->radius = radius;
     p->mass = mass;
     p->count = 0;
+    p->color.R = 255;
+    p->color.G = 255;
+    p->color.B = 255;
     return p;
 }
 
@@ -21,18 +24,21 @@ Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
-    p->radius = 0.002;
+    p->radius = 0.0025;
     // assign random position in range (0+ radius, 1- raadius)
-    p->rx = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
-    p->ry = p->radius + ((double)rand() * (1 - 2 * p->radius)) / (double)RAND_MAX;
+    p->rx = randomDouble(p->radius, 1 - p->radius);
+    p->ry = randomDouble(p->radius, 1 - p->radius);
     double low = -0.005, high = 0.005;
-    p->vx = ((double)rand() * (high - low)) / (double)RAND_MAX + low;
-    p->vy = ((double)rand() * (high - low)) / (double)RAND_MAX + low;
+    p->vx = randomDouble(low, high);
+    p->vy = randomDouble(low, high);
     p->mass = 0.5;
     p->count = 0;
-    // p->color
+    p->color.R = randomInt(256);
+    p->color.G = randomInt(256);
+    p->color.B = randomInt(256);
     return p;
 }
+
 void move(Particle *p, double dt)
 {
     p->rx += p->vx * dt;
@@ -62,8 +68,14 @@ double timeToHit(Particle *p1, Particle *p2)
     double drdr = dx * dx + dy * dy;
     double sigma = p1->radius + p2->radius; // distance between particle centers at collison
     double d = (dvdr * dvdr) - dvdv * (drdr - sigma * sigma);
-    if (drdr < sigma * sigma)
-        printf("overlapping particles");
+    if (drdr < (sigma * sigma) - 0.00000001)
+    {
+        printf("overlapping particles \n");
+        printf("%lf %lf\n", drdr, sigma * sigma);
+        InfoParticle(p1);
+        InfoParticle(p2);
+        exit(0);
+    }
     if (d < 0)
         return INFINITY;
     return -(dvdr + sqrt(d)) / dvdv;
@@ -74,7 +86,7 @@ int isOverlapping(Particle *p1, Particle *p2)
     double dx = p2->rx - p1->rx;
     double dy = p2->ry - p1->ry;
     double sigma = p1->radius + p2->radius;
-    return ((dx * dx + dy * dy) < (sigma * sigma));
+    return ((dx * dx + dy * dy) < (sigma * sigma)) - 0.00000001;
 }
 
 double timeToHitVerticalWall(Particle *p)
