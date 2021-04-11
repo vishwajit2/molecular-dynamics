@@ -33,7 +33,7 @@ void deletePQ(PQueue *pq)
 {
     if (NULL == pq)
     {
-        DEBUG("Priority Queue is already NULL.");
+        DEBUG("Priority Queue is already NULL.\n");
         return;
     }
     free(pq->arr);
@@ -49,11 +49,11 @@ void enqueuePQ(PQueue *q, Event *event)
         resizePQ(q, ((3 * q->capacity) / 2) + 1);
         if (q->size < q->capacity)
         {
-            printf("Priority Queue is full. we increased capacity");
+            printf("Priority Queue is full. we increased capacity\n");
         }
         else
         {
-            DEBUG("priority queue is full. can't add elements");
+            DEBUG("priority queue is full. can't add elements\n");
             return;
         }
     }
@@ -76,7 +76,7 @@ Event *peekPQ(PQueue *q)
     NP_CHECK(q);
     if (q->size < 1)
     {
-        DEBUG("Priority Queue is empty");
+        DEBUG("Priority Queue is empty\n");
         return NULL;
     }
     return q->arr[0];
@@ -89,7 +89,7 @@ Event *dequeuePQ(PQueue *q)
     if (q->size < 1)
     {
         // Priority Queue is empty
-        DEBUG("Priority Queue is empty . Cannot remove another element .");
+        DEBUG("Priority Queue is empty . Cannot remove another element.\n");
         return NULL;
     }
     data = q->arr[0];
@@ -152,7 +152,7 @@ void resizePQ(PQueue *q, size_t t)
     NP_CHECK(q->arr);
     if (t < q->size)
     {
-        DEBUG("can't resize to size less than current requirement");
+        DEBUG("can't resize to size less than current requirement\n");
     }
     else
     {
