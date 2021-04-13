@@ -118,11 +118,11 @@ void deleteCollisionSystem(CollisionSystem *cs)
 // the bug that spent 4 hours debugging was due to function call to newEvent
 // which was receiving int as parameter. double was expected.
 //  such a silly mistake !!!
-void predict(CollisionSystem *cs, Particle *a, double limit)
+void predict(CollisionSystem *cs, int p, double limit)
 {
-
-    if (!a)
+    if (p == INT_MIN)
         return;
+    Particle *a = cs->particles[p];
     double dt, dtX, dtY;
     // particle-particle collisions
     for (int i = 0; i < cs->n; i++)
@@ -132,11 +132,11 @@ void predict(CollisionSystem *cs, Particle *a, double limit)
         {
             if (dt < 0)
             {
-                enqueuePQ(cs->pq, newEvent(a, cs->particles[i], cs->t));
+                enqueuePQ(cs->pq, newEvent(cs->t, particleCollision, p, i, cs->particles));
             }
             else
             {
-                enqueuePQ(cs->pq, newEvent(a, cs->particles[i], cs->t + dt));
+                enqueuePQ(cs->pq, newEvent(cs->t + dt, particleCollision, p, i, cs->particles));
             }
         }
     }
@@ -146,33 +146,35 @@ void predict(CollisionSystem *cs, Particle *a, double limit)
     dtY = timeToHitHorizontalWall(a);
 
     if (cs->t + dtX <= limit)
-        enqueuePQ(cs->pq, newEvent(a, NULL, cs->t + dtX));
+        enqueuePQ(cs->pq, newEvent(cs->t + dtX, wallCollisionX, p, INT_MIN, cs->particles));
     if (cs->t + dtY <= limit)
-        enqueuePQ(cs->pq, newEvent(NULL, a, cs->t + dtY));
+        enqueuePQ(cs->pq, newEvent(cs->t + dtY, wallCollisionY, INT_MIN, p, cs->particles));
 }
 
 void advance(CollisionSystem *cs, double limit)
 {
     Event *e;
-    Particle *a, *b;
-    enqueuePQ(cs->pq, newEvent(NULL, NULL, (cs->t + 1.0))); // redraw event
-    while (!isEmptyPQ(cs->pq))
+    int a, b;
+    PQueue *pq = cs->pq;
+    Particle **particles = cs->particles;
+    enqueuePQ(pq, newRedrawEvent(cs->t + 1.5)); // redraw event
+    while (!isEmptyPQ(pq))
     {
 
         // get next event, discard if invalidated
-        e = dequeuePQ(cs->pq);
-        if (!isValid(e))
+        e = dequeuePQ(pq);
+        if (!isValid(e, particles))
             continue;
         a = e->particle1;
         b = e->particle2;
 
-        // printf("\n%lf %I64ld\n", cs->t, cs->pq->size);
+        // printf("\n%lf %I64ld\n", cs->t, pq->size);
 
         // physical collision, so update positions, and then simulation clock
         if (e->time > cs->t)
             for (int i = 0; i < cs->n; i++)
             {
-                move(cs->particles[i], e->time - cs->t);
+                move(particles[i], e->time - cs->t);
             }
         cs->t = e->time;
 
@@ -180,17 +182,19 @@ void advance(CollisionSystem *cs, double limit)
         free(e);
         // process event
         if (type == particleCollision)
-            bounceOff(a, b); // particle-particle collision
+            bounceOff(particles[a], particles[b]); // particle-particle collision
         else if (type == wallCollisionX)
-            bounceOffVerticalWall(a); // particle-wall collision
+            bounceOffVerticalWall(particles[a]); // particle-wall collision
         else if (type == wallCollisionY)
-            bounceOffHorizontalWall(b); // particle-wall collision
-        else if (type == noEvent)
+            bounceOffHorizontalWall(particles[b]); // particle-wall collision
+        else if (type == redrawEvent)
             return; // redraw event
 
         // update the priority queue with new collisions involving a or b
-        predict(cs, a, limit);
-        predict(cs, b, limit);
+        if (a != INT_MIN)
+            predict(cs, a, limit);
+        if (b != INT_MIN)
+            predict(cs, b, limit);
     }
 }
 
@@ -198,7 +202,7 @@ void buildEventQueue(CollisionSystem *cs, double limit)
 {
     for (size_t i = 0; i < cs->n; i++)
     {
-        predict(cs, cs->particles[i], limit);
+        predict(cs, i, limit);
     }
     return;
 }

@@ -19,7 +19,7 @@ CollisionSystem *randomCollisionSystem(int n);
 
 CollisionSystem *randomCollisionSystemPure(int n);
 
-void predict(CollisionSystem *cs, Particle *a, double limit);
+void predict(CollisionSystem *cs, int p, double limit);
 
 void buildEventQueue(CollisionSystem *cs, double limit);
 

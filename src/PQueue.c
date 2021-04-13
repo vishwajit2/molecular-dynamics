@@ -172,7 +172,7 @@ void TestPQ()
     PQueue *pq = createPQ(n);
     for (int i = 0; i < n; i++)
     {
-        a[i] = newEvent(NULL, NULL, rand());
+        a[i] = newRedrawEvent(rand());
         enqueuePQ(pq, a[i]);
         printf("%lf ", a[i]->time);
     }
