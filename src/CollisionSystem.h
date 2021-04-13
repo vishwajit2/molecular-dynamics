@@ -5,7 +5,6 @@
 #include "PQueue.h"
 #include "Particle.h"
 
-#define HZ 0.5 // number of redraw events per clock tick
 typedef struct CollisionSystem
 {
     size_t n;             // number of particles
@@ -22,7 +21,11 @@ CollisionSystem *randomCollisionSystemPure(int n);
 
 void predict(CollisionSystem *cs, Particle *a, double limit);
 
-void simulate(CollisionSystem *cs, double limit);
+void buildEventQueue(CollisionSystem *cs, double limit);
+
+void advance(CollisionSystem *cs, double limit);
+
+void simulateOnTerminal(CollisionSystem *cs, double limit);
 
 void deleteCollisionSystem(CollisionSystem *cs);
 

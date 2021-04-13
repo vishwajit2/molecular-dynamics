@@ -3,10 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
-#define HZ 0.5
-// time_t start_time;
-
+#define ExpectedPQSize(n) (n * (n - 1) / 2 + 10)
 CollisionSystem *createCollisionSystem(Particle **p, int n)
 {
     NP_CHECK(p);
@@ -18,7 +17,7 @@ CollisionSystem *createCollisionSystem(Particle **p, int n)
     {
         cs->particles[i] = p[i];
     }
-    cs->pq = createPQ(n * n + 20);
+    cs->pq = createPQ(ExpectedPQSize(n));
     cs->t = 0;
 
     return cs;
@@ -30,7 +29,7 @@ CollisionSystem *randomCollisionSystemPure(int n)
     srand(time(0));
     NP_CHECK(cs);
     cs->n = n;
-    cs->pq = createPQ(n * n + 20);
+    cs->pq = createPQ(ExpectedPQSize(n));
     cs->t = 0;
     cs->particles = (Particle **)malloc(n * sizeof(Particle *));
     Particle *p;
@@ -69,7 +68,7 @@ CollisionSystem *randomCollisionSystem(int n)
     srand(time(0));
     NP_CHECK(cs);
     cs->n = n;
-    cs->pq = createPQ(n * n);
+    cs->pq = createPQ(ExpectedPQSize(n));
     cs->t = 0;
     cs->particles = (Particle **)malloc(n * sizeof(Particle *));
     Particle **particles = cs->particles;
@@ -116,23 +115,6 @@ void deleteCollisionSystem(CollisionSystem *cs)
     return;
 }
 
-void redraw(CollisionSystem *cs, double limit)
-{
-    drawTerminal(cs->particles, cs->n);
-    // printf("\n%lf %ld\n", cs->t, time(NULL) - start_time);
-    sleep_ms(250);
-    if (cs->t < limit)
-    {
-        enqueuePQ(cs->pq, newEvent(NULL, NULL, (cs->t + 1.0 / HZ)));
-    }
-}
-
-#define MYPRINT                                                                \
-    for (int i = 0; i < cs->n; i++)                                            \
-    {                                                                          \
-        printf("%d %lf %lf\n", i, cs->particles[i]->rx, cs->particles[i]->ry); \
-    }
-
 // the bug that spent 4 hours debugging was due to function call to newEvent
 // which was receiving int as parameter. double was expected.
 //  such a silly mistake !!!
@@ -169,26 +151,16 @@ void predict(CollisionSystem *cs, Particle *a, double limit)
         enqueuePQ(cs->pq, newEvent(NULL, a, cs->t + dtY));
 }
 
-void simulate(CollisionSystem *cs, double limit)
+void advance(CollisionSystem *cs, double limit)
 {
-    // start_time = time(NULL);
-    PQueue *pq = cs->pq;
-    Particle **particles = cs->particles;
-    for (size_t i = 0; i < cs->n; i++)
-    {
-        predict(cs, particles[i], limit);
-    }
-    enqueuePQ(pq, newEvent(NULL, NULL, 0.0)); // redraw event
-
     Event *e;
     Particle *a, *b;
-
-    // the main event-driven simulation loop
-    while (!isEmptyPQ(pq))
+    enqueuePQ(cs->pq, newEvent(NULL, NULL, (cs->t + 1.0))); // redraw event
+    while (!isEmptyPQ(cs->pq))
     {
 
         // get next event, discard if invalidated
-        e = dequeuePQ(pq);
+        e = dequeuePQ(cs->pq);
         if (!isValid(e))
             continue;
         a = e->particle1;
@@ -200,19 +172,21 @@ void simulate(CollisionSystem *cs, double limit)
         if (e->time > cs->t)
             for (int i = 0; i < cs->n; i++)
             {
-                move(particles[i], e->time - cs->t);
+                move(cs->particles[i], e->time - cs->t);
             }
         cs->t = e->time;
 
+        eventType type = e->type;
+        free(e);
         // process event
-        if (e->type == particleCollision)
+        if (type == particleCollision)
             bounceOff(a, b); // particle-particle collision
-        else if (e->type == wallCollisionX)
+        else if (type == wallCollisionX)
             bounceOffVerticalWall(a); // particle-wall collision
-        else if (e->type == wallCollisionY)
+        else if (type == wallCollisionY)
             bounceOffHorizontalWall(b); // particle-wall collision
-        else if (e->type == noEvent)
-            redraw(cs, limit); // redraw event
+        else if (type == noEvent)
+            return; // redraw event
 
         // update the priority queue with new collisions involving a or b
         predict(cs, a, limit);
@@ -220,10 +194,31 @@ void simulate(CollisionSystem *cs, double limit)
     }
 }
 
+void buildEventQueue(CollisionSystem *cs, double limit)
+{
+    for (size_t i = 0; i < cs->n; i++)
+    {
+        predict(cs, cs->particles[i], limit);
+    }
+    return;
+}
+
+void simulateOnTerminal(CollisionSystem *cs, double limit)
+{
+    buildEventQueue(cs, limit);
+    while (cs->t <= limit)
+    {
+        advance(cs, limit);
+        drawTerminal(cs->particles, cs->n);
+        printf("\n%lf\n", cs->t);
+        sleep_ms(250);
+    }
+}
+
 // int main(int argc, char const *argv[])
 // {
 //     int n = 200;
 //     CollisionSystem *cs = randomCollisionSystem(n);
-//     simulate(cs, 500);
+//     simulateOnTerminal(cs, 200);
 //     return 0;
 // }
