@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "Particle.h"
 #include "fileIO.h"
 
@@ -58,7 +59,6 @@ void simulationfromFile(Simulation *sim, char *filename)
         particles[i]->color.G = g;
         particles[i]->color.B = b;
     }
-    fclose(fp);
 
     // check ovelaps
     int overlapCount = 0;
@@ -84,6 +84,72 @@ void simulationfromFile(Simulation *sim, char *filename)
         printf("Particles have  %d ovrlaps. It may not be processed properly\n", overlapCount);
     }
     sim->cs = createCollisionSystem(particles, n);
+    // particles to keep record of and save to file if any
+    int t;
+    while (fscanf(fp, "%d\n", &t) == 1)
+    {
+        setParticleforRecord(sim, t);
+    }
+
+    fclose(fp);
+    return;
+}
+
+void saveStateToFile(Simulation *sim)
+{
+    CollisionSystem *cs = sim->cs;
+    Particle **p = cs->particles;
+    SystemProperties *sp = sim->sp;
+    char filename[50];
+    struct tm *timenow;
+
+    time_t now = time(NULL);
+    timenow = gmtime(&now);
+    strftime(filename, sizeof(filename), "output/result-%M:%H-%d-%m-%Y.txt", timenow);
+    printf("saving to file : %s\n", filename);
+    FILE *fp = fopen(filename, "w");
+
+    if (!fp)
+    {
+        printf("couldn't save to file : %s\n. create a folder named output\n", filename);
+        return;
+    }
+    // save system properties
+    if (sp)
+    {
+        fprintf(fp, "System Properties\n");
+        fprintf(fp, "Collision Frequency :%lf\nPressure: %lf\nTemparature: %lf\nrms Velocity: %lf\nMean Free Path: %lf\n\n",
+                sp->collisionFreq, sp->pressure, sp->temp, sp->rmsVel, sp->meanFreePath);
+    }
+    // save particle data
+    fprintf(fp, "particle states\n");
+    for (int i = 0; i < cs->n; i++)
+    {
+        fprintf(fp, "%d %lf %lf %lf %lf %lf %lf %hhu %hhu %hhu \n",
+                i, p[i]->rx, p[i]->ry, p[i]->vx, p[i]->vy, p[i]->radius, p[i]->mass, p[i]->color.R, p[i]->color.G, p[i]->color.B);
+    }
+
+    if (sim->records)
+    {
+        fprintf(fp, "\nparticle Records\n");
+        ParticleRecord *p = sim->records;
+        dPairNode *r, *v;
+        while (p)
+        {
+            fprintf(fp, "Particle %d : rx ry vx vy", p->index);
+            r = p->position;
+            v = p->velocity;
+            while (r && v)
+            {
+                fprintf(fp, "%lf %lf %lf %lf\n", r->x, r->y, v->x, v->y);
+                r = r->next;
+                v = v->next;
+            }
+            fprintf(fp, "\n");
+            p = p->next;
+        }
+    }
+    fclose(fp);
 }
 
 CollisionSystem *CollisionSystemFromFile(char *filename)
