@@ -9,43 +9,19 @@
 #include "CollisionSystem.h"
 #include "utilities.h"
 #include "Simulation.h"
+#include "fileIO.h"
 
-char title[] = "Molecular Dynamics"; // Windowed mode's title
+#define windowWidth 1000  // windowed mode's width
+#define windowHeight 1000 // Windowed mode's height
+#define windowPosX 50     // Windowed mode's top-left corner x
+#define windowPosY 20     // Windowed mode's top-left corner y
+
+#define title "Molecular Dynamics"
 #define margin 2
+
 int boxDim = 1000 - 2 * margin;
-int windowWidth = 1000;  // windowed mode's width
-int windowHeight = 1000; // Windowed mode's height
-int windowPosX = 50;     // Windowed mode's top-left corner x
-int windowPosY = 20;     // Windowed mode's top-left corner y
-
-int n;
 CollisionSystem *cs;
-double limit = 2000;
-
 Simulation *sim;
-// Projection clipping area
-GLdouble clipAreaXLeft, clipAreaXRight, clipAreaYBottom, clipAreaYTop;
-
-/* Initialize OpenGL Graphics */
-void initGL()
-{
-    glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
-    glPointSize(2.0);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-
-    // setting window dimension in X- and Y- direction
-    gluOrtho2D(0, 1000, 0, 1000);
-}
-
-void reshape(int w, int h)
-{
-    boxDim = min(w, h) - 2 * margin;
-    glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluOrtho2D(0, w, 0, h);
-}
 
 void drawSquare(float r, float x, float y)
 {
@@ -57,12 +33,6 @@ void drawSquare(float r, float x, float y)
     glVertex2f(x + r, y + r);
     glVertex2f(x + r, y - r);
     glEnd();
-    // glVertex2f(x, y); // Center
-    // glVertex2f(r * cos(M_PI / 4) + x, r * sin(M_PI / 4) + y);
-    // glVertex2f(r * cos(3 * M_PI / 4) + x, r * sin(3 * M_PI / 4) + y);
-    // glVertex2f(r * cos(5 * M_PI / 4) + x, r * sin(5 * M_PI / 4) + y);
-    // glVertex2f(r * cos(7 * M_PI / 4) + x, r * sin(7 * M_PI / 4) + y);
-    // glVertex2f(r * cos(M_PI / 4) + x, r * sin(M_PI / 4) + y);
     glEnd();
 }
 
@@ -116,6 +86,28 @@ void drawTrails()
     }
     glEnd();
 }
+
+/* Initialize OpenGL Graphics */
+void initGL()
+{
+    glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
+    glPointSize(2.0);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+
+    // setting window dimension in X- and Y- direction
+    gluOrtho2D(0, 1000, 0, 1000);
+}
+
+void reshape(int w, int h)
+{
+    boxDim = min(w, h) - 2 * margin;
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, w, 0, h);
+}
+
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
@@ -136,7 +128,7 @@ void display(void)
         drawSquare(boxDim * cs->particles[i]->radius, margin + boxDim * cs->particles[i]->rx, margin + boxDim * cs->particles[i]->ry);
     }
 
-    for (; i < n; i++)
+    for (; i < cs->n; i++)
     {
         // glColor3f(i % 3, (i + 1) % 3, (i + 2) % 3);
         glColor3ub(cs->particles[i]->color.R, cs->particles[i]->color.G, cs->particles[i]->color.B);
@@ -150,11 +142,15 @@ void simulate(int k)
 {
     if (cs->t >= sim->limit)
     {
+        saveStateToFile(sim);
         glutLeaveMainLoop();
     }
 
     if (!sim->pause)
     {
+        if (sim->records)
+            updateParticleRecord(sim);
+
         if (sim->sp)
         {
             advanceSP(sim);
@@ -165,7 +161,7 @@ void simulate(int k)
             }
         }
         else
-            advance(cs, limit);
+            advance(cs, sim->limit);
         glutPostRedisplay(); // Post a re-paint request to activate display()
     }
     glutTimerFunc(refresh_interval, simulate, k);
@@ -195,20 +191,19 @@ void setGL(int argc, char **argv)
     // glutSpecialFunc(keyboard);                      // Register callback handler for special-key event
     glutKeyboardFunc(keyboard);
     glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
-    // glutFullScreen(); // Put into full screen
     initGL();       // Our own OpenGL initialization
     glutMainLoop(); // Enter event-processing loop
 }
 
 int main(int argc, char *argv[])
 {
-    ParticleConfig conf = getParticleConfig();
-    conf.radius = 0.1;
-    conf.vel_hi = 0.01;
-    conf.vel_lo = -0.01;
-    sim = newSimulation(limit, NULL, false, 3, &conf);
+    // ParticleConfig conf = getParticleConfig();
+    // conf.radius = 0.1;
+    // conf.vel_hi = 0.02;
+    // conf.vel_lo = -0.02;
+    double limit = 500;
+    sim = newSimulation(limit, "input/diffusion.txt", false, 3, NULL);
     cs = sim->cs;
-    n = cs->n;
     buildEventQueue(sim->cs, limit);
     setGL(argc, argv);
     return 0;
