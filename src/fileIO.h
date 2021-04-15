@@ -1,7 +1,7 @@
 #ifndef FILEIO_H
 #define FILEIO_H
 
-#include "CollisionSystem.h"
+#include "Simulation.h"
 CollisionSystem *CollisionSystemFromFile(char *filename);
-
+void simulationfromFile(Simulation *sim, char *filename);
 #endif
