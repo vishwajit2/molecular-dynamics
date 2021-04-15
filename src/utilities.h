@@ -23,4 +23,7 @@ void sleep_ms(int milliseconds);
 
 // random double between min and max (inclusive)
 #define randomDouble(min, max) ((min) + (double)rand() / ((double)RAND_MAX / ((max) - (min))))
+
+#define max(a, b) (((a) > (b)) ? (a) : (b))
+#define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
