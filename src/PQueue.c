@@ -49,7 +49,7 @@ void enqueuePQ(PQueue *q, Event *event)
         resizePQ(q, ((3 * q->capacity) / 2) + 1);
         if (q->size < q->capacity)
         {
-            printf("Priority Queue is full. we increased capacity\n");
+            // printf("Priority Queue is full. we increased capacity\n");
         }
         else
         {
