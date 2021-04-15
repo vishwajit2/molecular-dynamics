@@ -4,6 +4,33 @@
 #include <stdlib.h>
 #include <time.h>
 
+double default_radius = 0.0025;
+double default_mass = 0.5;
+Color default_color = {.R = 150, .G = 150, .B = 150};
+double default_vel_lo = -0.005;
+double default_vel_hi = 0.005;
+
+ParticleConfig getParticleConfig()
+{
+    ParticleConfig conf;
+    conf.radius = default_radius;
+    conf.mass = default_mass;
+    conf.color = default_color;
+    conf.vel_lo = default_vel_lo;
+    conf.vel_hi = default_vel_hi;
+    // printf("config genrated\n");
+    return conf;
+}
+
+void setParticleConfig(ParticleConfig conf)
+{
+    default_radius = conf.radius;
+    default_mass = conf.mass;
+    default_color = conf.color;
+    default_vel_lo = conf.vel_lo;
+    default_vel_hi = conf.vel_hi;
+}
+
 Particle *createParticle(double rx, double ry, double vx, double vy, double radius, double mass)
 {
     Particle *p = (Particle *)malloc(sizeof(Particle));
@@ -24,18 +51,28 @@ Particle *createRandomParticle()
 {
     // srand(time(0));
     Particle *p = (Particle *)malloc(sizeof(Particle));
-    p->radius = 0.0025;
+    p->radius = default_radius;
     // assign random position in range (0+ radius, 1- raadius)
     p->rx = randomDouble(p->radius, 1 - p->radius);
     p->ry = randomDouble(p->radius, 1 - p->radius);
-    double low = -0.005, high = 0.005;
-    p->vx = randomDouble(low, high);
-    p->vy = randomDouble(low, high);
-    p->mass = 0.5;
+    p->vx = randomDouble(default_vel_lo, default_vel_hi);
+    p->vy = randomDouble(default_vel_lo, default_vel_hi);
+    p->mass = default_mass;
     p->count = 0;
-    p->color.R = randomInt(256);
-    p->color.G = randomInt(256);
-    p->color.B = randomInt(256);
+    p->color = default_color;
+    return p;
+}
+
+Particle *defaultParticle()
+{
+    Particle *p = (Particle *)malloc(sizeof(Particle));
+    p->radius = default_radius;
+    // assign random position in range (0+ radius, 1- raadius)
+    p->vx = randomDouble(default_vel_lo, default_vel_hi);
+    p->vy = randomDouble(default_vel_lo, default_vel_hi);
+    p->mass = default_mass;
+    p->count = 0;
+    p->color = default_color;
     return p;
 }
 
@@ -290,6 +327,14 @@ void TestParticle()
     printf("compare a and b by by X : %d\n", comparePositionX(a, b));
     printf("compare a and b by by Y : %d\n", comparePositionY(a, b));
     return;
+}
+
+Color *newColor(color_t r, color_t g, color_t b)
+{
+    Color *c = (Color *)malloc(sizeof(Color));
+    c->R = r;
+    c->G = g;
+    c->B = b;
 }
 
 // int main()

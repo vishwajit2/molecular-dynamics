@@ -2,17 +2,25 @@
 #define PARTICLE_H
 #include <stddef.h>
 
-#define InfoParticle(p) (printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count))
-
 typedef unsigned char color_t;
-
-struct Color
+typedef struct Color
 {
     // RGB values between 0 to 255
     color_t R;
     color_t G;
     color_t B;
-};
+} Color;
+
+typedef struct ParticleConfig
+{
+    double radius;
+    double mass;
+    Color color;
+    double vel_lo;
+    double vel_hi;
+} ParticleConfig;
+
+#define InfoParticle(p) (printf("r(%lf,%lf) v(%lf,%lf) m(%lf) rad(%lf) count(%d) \n", p->rx, p->ry, p->vx, p->vy, p->mass, p->radius, p->count))
 
 typedef struct Particle
 {
@@ -24,11 +32,18 @@ typedef struct Particle
     struct Color color;
 } Particle;
 
+Color *newColor(color_t r, color_t g, color_t b);
+
+ParticleConfig getParticleConfig();
+void setParticleConfig(ParticleConfig conf);
+
 // init partile with given values
 Particle *createParticle(double rx, double ry, double vx, double vy, double radius, double mass);
 
 // initializes a particle with random position in unit box and random velocity
 Particle *createRandomParticle();
+
+Particle *defaultParticle();
 
 // returns 1 if p1 and p2 are same particles, else returns 0
 int isSame(Particle *p1, Particle *p2);
@@ -77,7 +92,9 @@ void sort(Particle **particles, size_t n);
 // check if array is sorted
 int isSorted(Particle **particles, size_t n);
 // draw particles in arrray to terminal
+
 void drawTerminal(Particle **particles, size_t n);
 
 void infoParticle(Particle *p);
+
 #endif
