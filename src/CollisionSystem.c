@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
+#include "Simulation.h"
 
 #define ExpectedPQSize(n) (n * (n - 1) / 2 + 10)
+
 CollisionSystem *createCollisionSystem(Particle **p, int n)
 {
     NP_CHECK(p);
@@ -74,13 +76,12 @@ CollisionSystem *randomCollisionSystem(int n)
     Particle **particles = cs->particles;
     // create a grid with distance between lines equal to twice the diameter.
     // put particles at the position of randomly chosen grid intersections
-    double radius = 0.0025;
+    double radius = getParticleConfig().radius;
     double diameter = 2 * radius;
     double mass = 0.5;
     int p = 0, q = 0;
     int t = 1.0 / (2 * diameter);
-    double vx, vy, rx, ry;
-    double low = -0.005, high = 0.005;
+    double rx, ry;
     char repeated = 0;
     double delta = 0.000001;
     for (int i = 0; i < n; i++)
@@ -100,9 +101,9 @@ CollisionSystem *randomCollisionSystem(int n)
             }
         } while (repeated);
         // printf("%d %lf %lf\n", i, rx, ry);
-        vx = randomDouble(low, high);
-        vy = randomDouble(low, high);
-        particles[i] = createParticle(rx, ry, vx, vy, radius, mass);
+        particles[i] = defaultParticle();
+        particles[i]->rx = rx;
+        particles[i]->ry = ry;
     }
     return cs;
 }
@@ -157,7 +158,7 @@ void advance(CollisionSystem *cs, double limit)
     int a, b;
     PQueue *pq = cs->pq;
     Particle **particles = cs->particles;
-    enqueuePQ(pq, newRedrawEvent(cs->t + 1.5)); // redraw event
+
     while (!isEmptyPQ(pq))
     {
 
@@ -188,7 +189,11 @@ void advance(CollisionSystem *cs, double limit)
         else if (type == wallCollisionY)
             bounceOffHorizontalWall(particles[b]); // particle-wall collision
         else if (type == redrawEvent)
-            return; // redraw event
+        {
+            if (cs->t + 1 / HZ <= limit)
+                enqueuePQ(pq, newRedrawEvent(cs->t + 1 / HZ)); // redraw event
+            return;                                            // redraw event
+        }
 
         // update the priority queue with new collisions involving a or b
         if (a != INT_MIN)
@@ -204,6 +209,7 @@ void buildEventQueue(CollisionSystem *cs, double limit)
     {
         predict(cs, i, limit);
     }
+    enqueuePQ(cs->pq, newRedrawEvent(0));
     return;
 }
 
