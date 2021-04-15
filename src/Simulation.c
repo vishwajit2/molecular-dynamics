@@ -6,6 +6,15 @@
 #include "Simulation.h"
 #include "fileIO.h"
 
+dPairNode *newdPairNode(double x, double y)
+{
+    dPairNode *t = (dPairNode *)malloc(sizeof(dPairNode));
+    t->x = x;
+    t->y = y;
+    t->next = NULL;
+    return t;
+}
+
 TrailNode *newTrailNode(int index, Color color, int limit)
 {
     TrailNode *t = (TrailNode *)malloc(sizeof(TrailNode));
@@ -23,6 +32,7 @@ Simulation *newSimulation(double limit, char *filename, bool calculateSP, int n,
     sim->limit = limit;
     sim->pause = false;
     sim->last_sampling_time = 0;
+    sim->records = NULL;
     if (filename)
     {
         simulationfromFile(sim, filename);
@@ -41,6 +51,62 @@ Simulation *newSimulation(double limit, char *filename, bool calculateSP, int n,
         sim->wallBalls = 0;
     }
     return sim;
+}
+
+ParticleRecord *newParticleRecord(int particle_index)
+{
+    ParticleRecord *record = (ParticleRecord *)malloc(sizeof(ParticleRecord));
+    record->index = particle_index;
+    record->next = NULL;
+    record->pos_head = NULL;
+    record->position = NULL;
+    record->vel_head = NULL;
+    record->velocity = NULL;
+    return record;
+}
+
+// set particle indices to keep records
+void setParticleforRecord(Simulation *sim, int particle_index)
+{
+    if (!sim || !sim->cs)
+        return;
+
+    if (particle_index >= sim->cs->n)
+    {
+        printf("index should be within bounds\n");
+        return;
+    }
+
+    ParticleRecord *rec = newParticleRecord(particle_index);
+    rec->next = sim->records;
+    sim->records = rec;
+}
+
+void updateParticleRecord(Simulation *sim)
+{
+    if (!sim)
+        return;
+    ParticleRecord *rec = sim->records;
+
+    while (rec)
+    {
+        Particle *p = sim->cs->particles[rec->index];
+        if (!rec->position)
+        {
+            rec->position = newdPairNode(p->rx, p->ry);
+            rec->pos_head = rec->position;
+            rec->velocity = newdPairNode(p->vx, p->vy);
+            rec->vel_head = rec->velocity;
+        }
+        else
+        {
+            rec->pos_head->next = newdPairNode(p->rx, p->ry);
+            rec->pos_head = rec->pos_head->next;
+            rec->vel_head->next = newdPairNode(p->vx, p->vy);
+            rec->vel_head = rec->vel_head->next;
+        }
+        rec = rec->next;
+    }
 }
 
 SystemProperties *newSystemProperties(int num)
