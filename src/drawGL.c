@@ -1,48 +1,35 @@
-
 #include <stdio.h>
 #include <GL/glut.h>
+#include <GL/freeglut.h>
 #include <math.h>
 #include <time.h>
+#include <stdbool.h>
 
 #include "Particle.h"
 #include "CollisionSystem.h"
 #include "utilities.h"
-#include "fileIO.h"
+#include "Simulation.h"
+
+char title[] = "Molecular Dynamics"; // Windowed mode's title
+#define margin 2
+int boxDim = 1000 - 2 * margin;
+int windowWidth = 1000;  // windowed mode's width
+int windowHeight = 1000; // Windowed mode's height
+int windowPosX = 50;     // Windowed mode's top-left corner x
+int windowPosY = 20;     // Windowed mode's top-left corner y
 
 int n;
-int rad = 5;
 CollisionSystem *cs;
-PQueue *pq;
-Particle **particles;
-double limit = 100000;
+double limit = 2000;
 
-Event *e;
-Particle *a, *b;
+Simulation *sim;
+// Projection clipping area
+GLdouble clipAreaXLeft, clipAreaXRight, clipAreaYBottom, clipAreaYTop;
 
-void drawCircle(float r, float x, float y)
+/* Initialize OpenGL Graphics */
+void initGL()
 {
-    float i = 0.0f;
-
-    glBegin(GL_TRIANGLE_FAN);
-
-    glVertex2f(x, y); // Center
-    for (i = 0.0f; i <= 360; i++)
-        glVertex2f(r * cos(M_PI * i / 180.0) + x, r * sin(M_PI * i / 180.0) + y);
-
-    glEnd();
-}
-
-// function to initialize
-void myInit(void)
-{
-    // making background color black as first
-    // 3 arguments all are 0.0
-    glClearColor(0.0, 0.0, 0.0, 1.0);
-
-    // making picture color green (in RGB mode), as middle argument is 1.0
-    glColor3f(0.0, 1.0, 0.0);
-
-    // breadth of picture boundary is 1 pixel
+    glClearColor(0.0, 0.0, 0.0, 1.0); // Set background (clear) color to black
     glPointSize(2.0);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -51,95 +38,178 @@ void myInit(void)
     gluOrtho2D(0, 1000, 0, 1000);
 }
 
+void reshape(int w, int h)
+{
+    boxDim = min(w, h) - 2 * margin;
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0, w, 0, h);
+}
+
+void drawSquare(float r, float x, float y)
+{
+    float i = 0.0f;
+    glPolygonMode(GL_FRONT, GL_FILL);
+    glBegin(GL_QUADS);
+    glVertex2f(x - r, y - r);
+    glVertex2f(x - r, y + r);
+    glVertex2f(x + r, y + r);
+    glVertex2f(x + r, y - r);
+    glEnd();
+    // glVertex2f(x, y); // Center
+    // glVertex2f(r * cos(M_PI / 4) + x, r * sin(M_PI / 4) + y);
+    // glVertex2f(r * cos(3 * M_PI / 4) + x, r * sin(3 * M_PI / 4) + y);
+    // glVertex2f(r * cos(5 * M_PI / 4) + x, r * sin(5 * M_PI / 4) + y);
+    // glVertex2f(r * cos(7 * M_PI / 4) + x, r * sin(7 * M_PI / 4) + y);
+    // glVertex2f(r * cos(M_PI / 4) + x, r * sin(M_PI / 4) + y);
+    glEnd();
+}
+
+void drawCircle(float r, float x, float y)
+{
+    float i = 0.0f;
+
+    glBegin(GL_TRIANGLE_FAN);
+
+    glVertex2f(x, y); // Center
+    // smaller the increment in i for each iteration of loop, circle would be more perfect.
+    // 4 is good for our particles
+    for (i = 0.0f; i <= 360; i += 4)
+        glVertex2f(r * cos(M_PI * i / 180.0) + x, r * sin(M_PI * i / 180.0) + y);
+
+    glEnd();
+}
+
+void drawTrails()
+{
+    if (!sim->traildata)
+        return;
+    TrailNode *t = sim->traildata;
+    iPair *data;
+    glBegin(GL_POINTS);
+    while (t)
+    {
+        glColor3ub(t->color.R, t->color.G, t->color.B);
+        data = t->data;
+        if (t->isFull)
+        {
+            for (int i = 0; i < max_trail_length; i++)
+                glVertex2i(data[i].x, data[i].y);
+        }
+        else
+        {
+            for (int i = 0; i < t->head; i++)
+                glVertex2i(data[i].x, data[i].y);
+        }
+
+        // add current position to trails
+        data[t->head].x = margin + boxDim * cs->particles[t->index]->rx;
+        data[t->head].y = margin + boxDim * cs->particles[t->index]->ry;
+        t->head++;
+        if (t->head == max_trail_length)
+        {
+            t->head = 0;
+            t->isFull = true;
+        }
+        t = t->next;
+    }
+    glEnd();
+}
 void display(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
-    float x, y;
+    glColor3ub(0, 255, 255);
+    glBegin(GL_LINE_LOOP);
+    glVertex2f(margin, margin);
+    glVertex2f(margin + boxDim, margin);
+    glVertex2f(margin + boxDim, margin + boxDim);
+    glVertex2f(margin, margin + boxDim);
+    glEnd();
 
-    for (int i = 0; i < n; i++)
+    drawTrails();
+
+    glColor3ub(cs->particles[0]->color.R, cs->particles[0]->color.G, cs->particles[0]->color.B);
+    int i = 0;
+    for (; i < sim->wallBalls; i++)
+    {
+        drawSquare(boxDim * cs->particles[i]->radius, margin + boxDim * cs->particles[i]->rx, margin + boxDim * cs->particles[i]->ry);
+    }
+
+    for (; i < n; i++)
     {
         // glColor3f(i % 3, (i + 1) % 3, (i + 2) % 3);
-        glColor3ub(particles[i]->color.R, particles[i]->color.G, particles[i]->color.B);
-        drawCircle(1000 * particles[i]->radius, 1000 * particles[i]->rx, 1000 * particles[i]->ry);
+        glColor3ub(cs->particles[i]->color.R, cs->particles[i]->color.G, cs->particles[i]->color.B);
+        drawCircle(boxDim * cs->particles[i]->radius, margin + boxDim * cs->particles[i]->rx, margin + boxDim * cs->particles[i]->ry);
     }
 
-    glEnd();
-    glFlush();
+    glutSwapBuffers();
 }
 
-void idle()
+void simulate(int k)
 {
-    // printf("idle\n");
-    // the main event-driven simulation loop
-    while (!isEmptyPQ(pq))
+    if (cs->t >= sim->limit)
     {
+        glutLeaveMainLoop();
+    }
 
-        // get next event, discard if invalidated
-        e = dequeuePQ(pq);
-        if (!isValid(e))
-            continue;
-        a = e->particle1;
-        b = e->particle2;
-
-        // printf("\n%lf %I64ld\n", cs->t, cs->pq->size);
-
-        // physical collision, so update positions, and then simulation clock
-        if (e->time > cs->t)
-            for (int i = 0; i < cs->n; i++)
-            {
-                move(particles[i], e->time - cs->t);
-            }
-        cs->t = e->time;
-
-        // process event
-        if (e->type == particleCollision)
-            bounceOff(a, b); // particle-particle collision
-        else if (e->type == wallCollisionX)
-            bounceOffVerticalWall(a); // particle-wall collision
-        else if (e->type == wallCollisionY)
-            bounceOffHorizontalWall(b); // particle-wall collision
-        else if (e->type == noEvent)
+    if (!sim->pause)
+    {
+        if (sim->sp)
         {
-            if (cs->t < limit)
+            advanceSP(sim);
+            if ((int)sim->cs->t % sampling_interval == 0 && (int)sim->cs->t != 0)
             {
-                enqueuePQ(cs->pq, newEvent(NULL, NULL, (cs->t + 1)));
+                system("clear");
+                displaySystemProperties(sim->sp);
             }
-            sleep_ms(20);
-            glutPostRedisplay(); // Post a re-paint request to activate display()
-            return;
         }
-
-        // update the priority queue with new collisions involving a or b
-        predict(cs, a, limit);
-        predict(cs, b, limit);
-        // printf("here\n");
+        else
+            advance(cs, limit);
+        glutPostRedisplay(); // Post a re-paint request to activate display()
     }
+    glutTimerFunc(refresh_interval, simulate, k);
 }
 
-int main(int argc, char **argv)
+void keyboard(unsigned char key, int mx, int my)
 {
-    cs = CollisionSystemFromFile("input/p10.txt");
-    n = cs->n;
-    pq = cs->pq;
-    particles = cs->particles;
-    for (size_t i = 0; i < cs->n; i++)
+
+    switch (key)
     {
-        predict(cs, particles[i], limit);
+    case 112:
+        sim->pause = !sim->pause;
+        // glutTimerFunc(0, advance, 0);
+        break; // "p" toggles pause
     }
-    enqueuePQ(pq, newEvent(NULL, NULL, 0.0)); // redraw event
+}
+void setGL(int argc, char **argv)
+{
+    glutInit(&argc, argv);                          // Initialize GLUT
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);    // Enable double buffered mode
+    glutInitWindowSize(windowWidth, windowHeight);  // Initial window width and height
+    glutInitWindowPosition(windowPosX, windowPosY); // Initial window top-left corner (x, y)
+    glutCreateWindow(title);                        // Create window with given title
+    glutDisplayFunc(display);                       // Register callback handler for window re-paint
+    glutReshapeFunc(reshape);                       // Register callback handler for window re-shape
+    glutTimerFunc(0, simulate, 0);                  // First timer call immediately
+    // glutSpecialFunc(keyboard);                      // Register callback handler for special-key event
+    glutKeyboardFunc(keyboard);
+    glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_CONTINUE_EXECUTION);
+    // glutFullScreen(); // Put into full screen
+    initGL();       // Our own OpenGL initialization
+    glutMainLoop(); // Enter event-processing loop
+}
 
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
-
-    // giving window size in X- and Y- direction
-    glutInitWindowSize(1000, 1000);
-    glutInitWindowPosition(300, 0);
-
-    // Giving name to window
-    glutCreateWindow("Molecular Dynamics Simulation");
-    myInit();
-
-    glutDisplayFunc(display);
-    glutIdleFunc(idle);
-    glutMainLoop();
+int main(int argc, char *argv[])
+{
+    ParticleConfig conf = getParticleConfig();
+    conf.radius = 0.1;
+    conf.vel_hi = 0.01;
+    conf.vel_lo = -0.01;
+    sim = newSimulation(limit, NULL, false, 3, &conf);
+    cs = sim->cs;
+    n = cs->n;
+    buildEventQueue(sim->cs, limit);
+    setGL(argc, argv);
+    return 0;
 }
