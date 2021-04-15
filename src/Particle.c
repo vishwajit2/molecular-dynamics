@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <time.h>
 
-double default_radius = 0.0025;
+double default_radius = 0.004;
 double default_mass = 0.5;
-Color default_color = {.R = 150, .G = 150, .B = 150};
+Color default_color = {.R = 200, .G = 200, .B = 200};
 double default_vel_lo = -0.005;
 double default_vel_hi = 0.005;
 

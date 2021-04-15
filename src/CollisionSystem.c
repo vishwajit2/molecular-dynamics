@@ -81,6 +81,13 @@ CollisionSystem *randomCollisionSystem(int n)
     double mass = 0.5;
     int p = 0, q = 0;
     int t = 1.0 / (2 * diameter);
+    if (n >= (t * t) / 2)
+    {
+        printf("can't create collision system with this configuration\n");
+        printf(" decrease radius or number of particles\n");
+        exit(0);
+    }
+
     double rx, ry;
     char repeated = 0;
     double delta = 0.000001;

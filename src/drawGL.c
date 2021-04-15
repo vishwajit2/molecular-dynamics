@@ -195,14 +195,10 @@ void setGL(int argc, char **argv)
     glutMainLoop(); // Enter event-processing loop
 }
 
-int main(int argc, char *argv[])
+int startSimulation(int argc, char *argv[], double limit, char *filename, int num_particles, int calculateSP, ParticleConfig *conf)
 {
-    // ParticleConfig conf = getParticleConfig();
-    // conf.radius = 0.1;
-    // conf.vel_hi = 0.02;
-    // conf.vel_lo = -0.02;
-    double limit = 500;
-    sim = newSimulation(limit, "input/diffusion.txt", false, 3, NULL);
+    srand(time(NULL));
+    sim = newSimulation(limit, filename, calculateSP, num_particles, conf);
     cs = sim->cs;
     buildEventQueue(sim->cs, limit);
     setGL(argc, argv);
