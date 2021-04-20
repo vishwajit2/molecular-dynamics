@@ -64,6 +64,82 @@ CollisionSystem *randomCollisionSystemPure(int n)
     return cs;
 }
 
+void randomCollisionSysRec(int n, Particle **particles, double x_lo, double y_lo, double x_hi, double y_hi, double radius)
+{
+    if (n >= 40)
+    {
+        int nn = n / 4;
+        int extra = n % 4;
+        // divide extra particles in 4 quadrants randomly with restriction as 1 extra per each maximum
+        int diff[4] = {0, 0, 0, 0};
+        Particle **p[4];
+        int i = 0;
+        while (i < extra)
+        {
+            int t = randomInt(4);
+            if (diff[t] != 1)
+            {
+                diff[t] = 1;
+                i++;
+            }
+        }
+        p[0] = particles;
+        for (int i = 1; i < 4; i++)
+        {
+            p[i] = p[i - 1] + nn + diff[i - 1];
+        }
+
+        double x_mid = (x_hi + x_lo) / 2;
+        double y_mid = (y_hi + y_lo) / 2;
+
+        printf("recursive call sizes \n %d : %d %d %d %d \n", nn, diff[0], diff[1], diff[2], diff[3]);
+
+        // recursively insert particles in 4 subquadrants of this square
+        randomCollisionSysRec(nn + diff[0], p[0], x_lo, y_lo, x_mid, y_mid, radius);
+        randomCollisionSysRec(nn + diff[1], p[1], x_lo, y_mid, x_mid, y_hi, radius);
+        randomCollisionSysRec(nn + diff[2], p[2], x_mid, y_lo, x_hi, y_mid, radius);
+        randomCollisionSysRec(nn + diff[3], p[3], x_mid, y_mid, x_hi, y_hi, radius);
+    }
+    else
+    {
+        // base case
+        double diameter = 2 * radius;
+        int p = 0, q = 0;
+        int t = (x_hi - x_lo) / (2 * diameter);
+        if (n >= (t * t) / 2)
+        {
+            printf("can't create collision system with this configuration\n");
+            printf(" decrease radius or number of particles\n");
+            exit(0);
+        }
+
+        double rx, ry;
+        char repeated = 0;
+        double delta = 0.000001;
+        for (int i = 0; i < n; i++)
+        {
+            do
+            {
+                repeated = 0;
+                p = t * (double)rand() / (double)RAND_MAX;
+                q = t * (double)rand() / (double)RAND_MAX;
+                rx = x_lo + radius + p * 2 * diameter;
+                ry = y_lo + radius + q * 2 * diameter;
+
+                for (int j = 0; j < i && !repeated; j++)
+                {
+                    if ((particles[j]->rx > rx - delta && particles[j]->rx < rx + delta) && (particles[j]->ry > ry - delta && particles[j]->ry < ry + delta))
+                        repeated = 1;
+                }
+            } while (repeated);
+            // printf("%d %lf %lf\n", i, rx, ry);
+            particles[i] = defaultParticle();
+            particles[i]->rx = rx;
+            particles[i]->ry = ry;
+        }
+    }
+}
+
 CollisionSystem *randomCollisionSystem(int n)
 {
     CollisionSystem *cs = (CollisionSystem *)malloc(sizeof(CollisionSystem));
@@ -77,41 +153,8 @@ CollisionSystem *randomCollisionSystem(int n)
     // create a grid with distance between lines equal to twice the diameter.
     // put particles at the position of randomly chosen grid intersections
     double radius = getParticleConfig().radius;
-    double diameter = 2 * radius;
-    double mass = 0.5;
-    int p = 0, q = 0;
-    int t = 1.0 / (2 * diameter);
-    if (n >= (t * t) / 2)
-    {
-        printf("can't create collision system with this configuration\n");
-        printf(" decrease radius or number of particles\n");
-        exit(0);
-    }
-
-    double rx, ry;
-    char repeated = 0;
-    double delta = 0.000001;
-    for (int i = 0; i < n; i++)
-    {
-        do
-        {
-            repeated = 0;
-            p = t * (double)rand() / (double)RAND_MAX;
-            q = t * (double)rand() / (double)RAND_MAX;
-            rx = radius + p * 2 * diameter;
-            ry = radius + q * 2 * diameter;
-
-            for (int j = 0; j < i && !repeated; j++)
-            {
-                if ((particles[j]->rx > rx - delta && particles[j]->rx < rx + delta) && (particles[j]->ry > ry - delta && particles[j]->ry < ry + delta))
-                    repeated = 1;
-            }
-        } while (repeated);
-        // printf("%d %lf %lf\n", i, rx, ry);
-        particles[i] = defaultParticle();
-        particles[i]->rx = rx;
-        particles[i]->ry = ry;
-    }
+    printf("here");
+    randomCollisionSysRec(n, particles, 0, 0, 1, 1, radius);
     return cs;
 }
 
