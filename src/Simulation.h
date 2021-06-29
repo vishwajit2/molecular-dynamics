@@ -83,4 +83,6 @@ void setParticleforRecord(Simulation *sim, int particle_index);
 void updateParticleRecord(Simulation *sim);
 
 int startSimulation(int argc, char *argv[], double limit, char *filename, int num_particles, int calculateSP, ParticleConfig *conf);
+
+void deleteSimulation(Simulation *sim);
 #endif

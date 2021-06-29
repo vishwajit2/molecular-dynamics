@@ -92,7 +92,7 @@ void randomCollisionSysRec(int n, Particle **particles, double x_lo, double y_lo
         double x_mid = (x_hi + x_lo) / 2;
         double y_mid = (y_hi + y_lo) / 2;
 
-        printf("recursive call sizes \n %d : %d %d %d %d \n", nn, diff[0], diff[1], diff[2], diff[3]);
+        // printf("recursive call sizes \n %d : %d %d %d %d \n", nn, diff[0], diff[1], diff[2], diff[3]);
 
         // recursively insert particles in 4 subquadrants of this square
         randomCollisionSysRec(nn + diff[0], p[0], x_lo, y_lo, x_mid, y_mid, radius);
@@ -106,7 +106,7 @@ void randomCollisionSysRec(int n, Particle **particles, double x_lo, double y_lo
         double diameter = 2 * radius;
         int p = 0, q = 0;
         int t = (x_hi - x_lo) / (2 * diameter);
-        if (n >= (t * t) / 2)
+        if (n >= (t * t))
         {
             printf("can't create collision system with this configuration\n");
             printf(" decrease radius or number of particles\n");
@@ -153,15 +153,18 @@ CollisionSystem *randomCollisionSystem(int n)
     // create a grid with distance between lines equal to twice the diameter.
     // put particles at the position of randomly chosen grid intersections
     double radius = getParticleConfig().radius;
-    printf("here");
     randomCollisionSysRec(n, particles, 0, 0, 1, 1, radius);
     return cs;
 }
 
 void deleteCollisionSystem(CollisionSystem *cs)
 {
+    for (int i = 0; i < cs->n; i++)
+    {
+        free(cs->particles[i]);
+    }
     free(cs->particles);
-    free(cs->pq);
+    deletePQ(cs->pq);
     free(cs);
     return;
 }

@@ -32,4 +32,4 @@ main.o: main.c
 	gcc -c main.c
 
 debug: drawTerminal.c Event.c Particle.c PQueue.c CollisionSystem.c fileIO.c Simulation.c drawGL.c main.c
-	gcc -o -g mdsDebug drawGL.c Particle.c Event.c PQueue.c CollisionSystem.c drawTerminal.c utilities.c fileIO.c Simulation.c main.c -lGL -lGLU -lglut -lm 
+	gcc -o mdsDebug -g drawGL.c Particle.c Event.c PQueue.c CollisionSystem.c drawTerminal.c utilities.c fileIO.c Simulation.c main.c -lGL -lGLU -lglut -lm 

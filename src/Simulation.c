@@ -248,3 +248,45 @@ void advanceSP(Simulation *sim)
         predict(cs, b, sim->limit);
     }
 }
+
+void deleteSystemProperties(SystemProperties *sp)
+{
+    free(sp->freeTime);
+    free(sp->freeTime);
+    free(sp);
+}
+
+void deleteSimulation(Simulation *sim)
+{
+    TrailNode *trail = sim->traildata, *temp;
+    while (trail)
+    {
+        free(trail->data);
+        temp = trail;
+        trail = trail->next;
+        free(trail);
+    }
+    ParticleRecord *par = sim->records, *temp2;
+    while (par)
+    {
+        dPairNode *pos = par->position, *vel = par->velocity, *temp3;
+        while (pos)
+        {
+            temp3 = pos;
+            pos = pos->next;
+            free(temp3);
+        }
+        while (vel)
+        {
+            temp3 = vel;
+            vel = vel->next;
+            free(temp3);
+        }
+        temp2 = par;
+        par = par->next;
+        free(temp2);
+    }
+    deleteSystemProperties(sim->sp);
+    deleteCollisionSystem(sim->cs);
+    free(sim);
+}
