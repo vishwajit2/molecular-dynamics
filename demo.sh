@@ -1,5 +1,6 @@
 # run this to see demo
 # give permission by executing :  chmod +x demo.sh
+cd src
 make
 ./mds -f input/diffusion.txt
 ./mds -f input/brownian.txt
